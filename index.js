@@ -16,6 +16,27 @@ app.use(cors(corsOptions))
 app.use(express.json());
 
 
+// jwt..............st
+
+const verifyJwt = (req, res, next) => {
+    const authorization = req.headers.authorization;
+    if (!authorization) {
+        return res.status(401).send({ error: true, message: 'Unauthorized Access' })
+    }
+
+    const token = authorization.split(' ')[1];
+
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+        if (err) {
+            return res.status(401).send({ error: true, message: 'Unauthorized Access' })
+        };
+        req.decoded = decoded;
+        next();
+    })
+}
+
+// jwt.......end
+
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.ngcnpjb.mongodb.net/?retryWrites=true&w=majority`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -33,7 +54,18 @@ async function run() {
 
         const usersCollection = client.db('danceDB').collection('users');
 
-// all users...........start.....
+        // jwt.......
+
+        app.post('/jwt', (req, res) => {
+            const user = req.body;
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
+            res.send({ token })
+        })
+
+        // jwt......end
+        
+
+        // all users...........start.....
         app.post('/users', async (req, res) => {
             const user = req.body;
             const query = { email: user.email };
@@ -44,7 +76,7 @@ async function run() {
             const result = await usersCollection.insertOne(user);
             res.send(result);
         })
-// all users.......end.....
+        // all users.......end.....
 
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
