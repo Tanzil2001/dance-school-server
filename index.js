@@ -63,9 +63,28 @@ async function run() {
         })
 
         // jwt......end
-        
+
 
         // all users...........start.....
+
+        app.get('/users', async (req, res) => {
+            const result = await usersCollection.find().toArray();
+            res.send(result)
+        })
+
+        app.get('/users/admin/:email',  async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+
+            if (req.decoded.email !== email) {
+                res.send({ admin: false })
+            }
+
+            const user = await usersCollection.findOne(query);
+            const result = { admin: user?.role === 'admin' }
+            res.send(result)
+        })
+
         app.post('/users', async (req, res) => {
             const user = req.body;
             const query = { email: user.email };
