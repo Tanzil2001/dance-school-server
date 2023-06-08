@@ -53,6 +53,7 @@ async function run() {
         await client.connect();
 
         const usersCollection = client.db('danceDB').collection('users');
+        const classCollection = client.db('danceDB').collection('classes')
 
         // jwt.......
 
@@ -135,6 +136,19 @@ async function run() {
         })
 
         // all users.......end.....
+
+// classes...st...
+
+        app.get('/classes' , async (req, res) =>{
+            const result = await classCollection.find().toArray();
+            res.send(result);
+        })
+
+        app.post('/classes', async (req, res) =>{
+            const classes = req.body;
+            const result = await classCollection.insertOne(classes);
+            res.send(result);
+        })
 
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
