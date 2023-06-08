@@ -72,7 +72,7 @@ async function run() {
             res.send(result)
         })
 
-        app.get('/users/admin/:email', async (req, res) => {
+        app.get('/users/admin/:email', verifyJwt, async (req, res) => {
             const email = req.params.email;
             const query = { email: email };
 
@@ -82,6 +82,20 @@ async function run() {
 
             const user = await usersCollection.findOne(query);
             const result = { admin: user?.role === 'admin' }
+            res.send(result)
+        })
+
+
+        app.get('/users/instructor/:email', verifyJwt, async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+
+            if (req.decoded.email !== email) {
+                res.send({ admin: false })
+            }
+
+            const user = await usersCollection.findOne(query);
+            const result = { admin: user?.role === 'instructor' }
             res.send(result)
         })
 
