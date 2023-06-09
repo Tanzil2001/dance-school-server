@@ -144,6 +144,18 @@ async function run() {
             res.send(result);
         })
 
+        app.get('/email', async (req, res) => {
+            try {
+                const email = req.query.email;
+                const query = { instructorEmail: email };
+                const user = await classCollection.find(query).toArray();
+                res.send(user);
+            } catch (error) {
+                console.error(error);
+                res.status(500).send('Internal Server Error');
+            }
+        });
+
         app.get('/approvedClasses', async (req, res) => {
             try {
                 const result = await classCollection.find({ status: 'approved' }).toArray();
@@ -154,6 +166,7 @@ async function run() {
             }
         });
 
+
         app.post('/classes', async (req, res) => {
             const classes = req.body;
             const result = await classCollection.insertOne(classes);
@@ -161,14 +174,41 @@ async function run() {
         })
 
 
-        app.patch('/classes/:id', async (req, res) => {
-            const id = req.params.id;
-            const filter = { _id: new ObjectId(id) };
-            const updatedDoc = {
-                $set: {
-                    status: 'approved'
+        app.post("/classes/:classId/deny", verifyJwt, async (req, res) => {
+            try {
+                const classId = req.params.classId;
+                const feedback = req.body.feedback;
+                await classCollection.updateOne(
+                    { _id: new ObjectId(classId), status: "pending" },
+                    { $set: { status: "denied", feedback: feedback } }
+                );
+                res.sendStatus(200);
+            } catch (error) {
+                console.error(error);
+                res.status(500).send("Internal Server Error");
+            }
+        });
+
+
+        app.patch('/classes', async (req, res) => {
+            const id = req.query.id;
+            const status = req.query.status;
+            let updatedDoc = {};
+            if (status === 'approved') {
+                updatedDoc = {
+                    $set: {
+                        status: 'approved'
+                    }
                 }
-            };
+            }
+            else if (status === 'denied') {
+                updatedDoc = {
+                    $set: {
+                        status: 'denied'
+                    }
+                }
+            }
+            const filter = { _id: new ObjectId(id) };
             const result = await classCollection.updateOne(filter, updatedDoc);
             res.send(result);
         })
