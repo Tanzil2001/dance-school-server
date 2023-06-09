@@ -54,7 +54,7 @@ async function run() {
 
         const usersCollection = client.db('danceDB').collection('users');
         const classCollection = client.db('danceDB').collection('classes')
-
+        const selectClassCollection = client.db('danceDB').collection('selectedClass')
         // jwt.......
 
         app.post('/jwt', (req, res) => {
@@ -92,11 +92,11 @@ async function run() {
             const query = { email: email };
 
             if (req.decoded.email !== email) {
-                res.send({ admin: false })
+                res.send({ instructor: false })
             }
 
             const user = await usersCollection.findOne(query);
-            const result = { admin: user?.role === 'instructor' }
+            const result = { instructor: user?.role === 'instructor' }
             res.send(result)
         })
 
@@ -170,6 +170,30 @@ async function run() {
                 }
             };
             const result = await classCollection.updateOne(filter, updatedDoc);
+            res.send(result);
+        })
+
+        // selected classes ...........st 
+
+        app.get('/selected', verifyJwt, async (req, res) => {
+            const email = req.query.email;
+            if (!email) {
+                res.send([])
+            }
+            // jwt.........
+            const decodedEmail = req.decoded.email;
+            if (email !== decodedEmail) {
+                return res.status(403).send({ error: true, message: 'forbidden Access' })
+            }
+            // jwt.........
+            const query = { email: email };
+            const result = await selectClassCollection.find(query).toArray();
+            res.send(result);
+        })
+
+        app.post('/selectedClass', async (req, res) => {
+            const classes = req.body;
+            const result = await selectClassCollection.insertOne(classes);
             res.send(result);
         })
 
