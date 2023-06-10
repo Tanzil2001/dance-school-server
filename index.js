@@ -73,6 +73,11 @@ async function run() {
             res.send(result)
         })
 
+        app.get('/instructors', async (req, res) =>{
+            const result = await usersCollection.find({role : 'instructor'}).toArray();
+            res.send(result);
+        })
+
         app.get('/users/admin/:email', verifyJwt, async (req, res) => {
             const email = req.params.email;
             const query = { email: email };
@@ -87,11 +92,11 @@ async function run() {
         })
 
 
-        app.get('/users/instructor/:email', verifyJwt, async (req, res) => {
+        app.get('/users/instructor/:email', verifyJwt,  async (req, res) => {
             const email = req.params.email;
             const query = { email: email };
 
-            if (req.decoded.email !== email) {
+            if (req?.decoded?.email !== email) {
                 res.send({ instructor: false })
             }
 
@@ -201,13 +206,6 @@ async function run() {
                     }
                 }
             }
-            else if (status === 'denied') {
-                updatedDoc = {
-                    $set: {
-                        status: 'denied'
-                    }
-                }
-            }
             const filter = { _id: new ObjectId(id) };
             const result = await classCollection.updateOne(filter, updatedDoc);
             res.send(result);
@@ -234,6 +232,13 @@ async function run() {
         app.post('/selectedClass', async (req, res) => {
             const classes = req.body;
             const result = await selectClassCollection.insertOne(classes);
+            res.send(result);
+        })
+
+        app.delete('/selected/:id', async(req, res) =>{
+            const id = req.params.id;
+            const query = {_id: new ObjectId(id)};
+            const result = await selectClassCollection.deleteOne(query);
             res.send(result);
         })
 
